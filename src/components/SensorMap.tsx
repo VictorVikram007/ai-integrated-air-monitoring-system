@@ -1,9 +1,16 @@
-
 import { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import Map from 'ol/Map';
+import View from 'ol/View';
+import TileLayer from 'ol/layer/Tile';
+import OSM from 'ol/source/OSM';
+import { fromLonLat } from 'ol/proj';
+import { Feature } from 'ol';
+import { Point } from 'ol/geom';
+import { Vector as VectorLayer } from 'ol/layer';
+import { Vector as VectorSource } from 'ol/source';
+import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 import { Card } from './ui/card';
-import './SensorMap.css';
+import 'ol/ol.css';
 
 // Define type for location data
 type Location = {
@@ -53,47 +60,96 @@ const locations: Location[] = [
 
 const SensorMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<L.Map | null>(null);
+  const map = useRef<Map | null>(null);
 
   useEffect(() => {
     if (!mapContainer.current) return;
 
+    // Create vector features for each location
+    const features = locations.map(location => {
+      const feature = new Feature({
+        geometry: new Point(fromLonLat([location.coordinates[1], location.coordinates[0]])),
+        name: location.name,
+        readings: location.readings,
+      });
+
+      // Set style based on PM2.5 levels
+      feature.setStyle(new Style({
+        image: new CircleStyle({
+          radius: 8,
+          fill: new Fill({
+            color: getMarkerColor(location.readings.pm25),
+          }),
+          stroke: new Stroke({
+            color: '#000',
+            width: 1,
+          }),
+        }),
+      }));
+
+      return feature;
+    });
+
+    // Create vector source and layer
+    const vectorSource = new VectorSource({
+      features: features,
+    });
+
+    const vectorLayer = new VectorLayer({
+      source: vectorSource,
+    });
+
     // Initialize map
-    map.current = L.map(mapContainer.current).setView([12.8760, 80.2186], 11);
+    map.current = new Map({
+      target: mapContainer.current,
+      layers: [
+        new TileLayer({
+          source: new OSM(),
+        }),
+        vectorLayer,
+      ],
+      view: new View({
+        center: fromLonLat([80.2186, 12.8760]), // Chennai coordinates
+        zoom: 11,
+      }),
+    });
 
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map.current);
+    // Add popup overlay for location info
+    const container = document.createElement('div');
+    container.className = 'ol-popup bg-white p-3 rounded shadow-lg';
 
-    // Add markers for each location
-    locations.forEach(location => {
-      const popupContent = `
-        <div style="padding: 10px;">
-          <h3 style="margin: 0 0 8px 0; font-weight: bold;">${location.name}</h3>
-          <p style="margin: 4px 0;">PM2.5: ${location.readings.pm25} µg/m³</p>
-          <p style="margin: 4px 0;">PM10: ${location.readings.pm10} µg/m³</p>
-          <p style="margin: 4px 0;">Temperature: ${location.readings.temperature}°C</p>
-          <p style="margin: 4px 0;">Humidity: ${location.readings.humidity}%</p>
-        </div>
-      `;
+    map.current.on('click', (event) => {
+      const feature = map.current?.forEachFeatureAtPixel(event.pixel, (feature) => feature);
+      
+      if (feature) {
+        const properties = feature.getProperties();
+        const readings = properties.readings;
+        
+        container.innerHTML = `
+          <h3 class="font-bold mb-2">${properties.name}</h3>
+          <p class="mb-1">PM2.5: ${readings.pm25} µg/m³</p>
+          <p class="mb-1">PM10: ${readings.pm10} µg/m³</p>
+          <p class="mb-1">Temperature: ${readings.temperature}°C</p>
+          <p class="mb-1">Humidity: ${readings.humidity}%</p>
+        `;
 
-      // Create the marker with custom color based on PM2.5 levels
-      L.circleMarker(location.coordinates, {
-        radius: 10,
-        fillColor: getMarkerColor(location.readings.pm25),
-        color: '#000',
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.8
-      })
-        .bindPopup(popupContent)
-        .addTo(map.current!);
+        const coordinates = (feature.getGeometry() as Point).getCoordinates();
+        map.current?.getOverlayContainer().appendChild(container);
+        container.style.position = 'absolute';
+        const pixel = map.current?.getPixelFromCoordinate(coordinates);
+        if (pixel) {
+          container.style.left = `${pixel[0]}px`;
+          container.style.top = `${pixel[1] - container.offsetHeight}px`;
+        }
+      } else {
+        container.remove();
+      }
     });
 
     // Cleanup
     return () => {
-      map.current?.remove();
+      map.current?.setTarget(undefined);
+      container.remove();
     };
   }, []);
 
