@@ -5,6 +5,7 @@ import { generateSensorData } from "@/utils/generateSensorData";
 import { toast } from "@/components/ui/sonner";
 import SensorCard from "./SensorCard";
 import { Progress } from "@/components/ui/progress";
+import { createClient } from '@supabase/supabase-js';
 
 interface SensorData {
   particulate: {
@@ -20,23 +21,52 @@ interface SensorData {
   };
 }
 
-const checkAirQuality = (pm25: number, pm10: number, co: number) => {
-  // Check PM2.5 and PM10
-  if (pm25 > 180 || pm10 > 180) {
-    toast.warning("Air Quality Alert", {
-      description: "Severe air quality detected! PM levels exceeding 180 µg/m³",
-    });
-  } else if (pm25 > 91 || pm10 > 91) {
-    toast.warning("Air Quality Warning", {
-      description: "Very poor air quality detected! PM levels between 91-180 µg/m³",
-    });
-  }
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+);
 
-  // Check CO levels
-  if (co > 50) {
-    toast.warning("CO Level Alert", {
-      description: `High CO concentration detected: ${co} ppm`,
+const checkAirQuality = async (pm25: number, pm10: number, co: number) => {
+  try {
+    // Call Supabase Edge Function for anomaly detection
+    const { data, error } = await supabase.functions.invoke('detect-anomaly', {
+      body: {
+        pm25,
+        pm10,
+        co
+      }
     });
+
+    if (error) {
+      console.error('Error checking anomaly:', error);
+      return;
+    }
+
+    if (data?.isAnomaly) {
+      toast.warning("Anomaly Detected!", {
+        description: data.message,
+      });
+    }
+
+    // Regular air quality checks
+    if (pm25 > 180 || pm10 > 180) {
+      toast.warning("Air Quality Alert", {
+        description: "Severe air quality detected! PM levels exceeding 180 µg/m³",
+      });
+    } else if (pm25 > 91 || pm10 > 91) {
+      toast.warning("Air Quality Warning", {
+        description: "Very poor air quality detected! PM levels between 91-180 µg/m³",
+      });
+    }
+
+    // Check CO levels
+    if (co > 50) {
+      toast.warning("CO Level Alert", {
+        description: `High CO concentration detected: ${co} ppm`,
+      });
+    }
+  } catch (error) {
+    console.error('Error in anomaly detection:', error);
   }
 };
 
@@ -48,12 +78,28 @@ const SensorDashboard = () => {
   });
 
   useEffect(() => {
-    const updateData = () => {
+    const updateData = async () => {
       const newData = generateSensorData();
       setSensorData(newData);
       
-      // Check thresholds and show alerts
-      checkAirQuality(
+      // Store reading in Supabase
+      const { error: dbError } = await supabase
+        .from('sensor_readings')
+        .insert([{
+          pm25: newData.particulate.pm25,
+          pm10: newData.particulate.pm10,
+          co: newData.mq7.co,
+          temperature: newData.dht11.temperature,
+          humidity: newData.dht11.humidity,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (dbError) {
+        console.error('Error storing sensor data:', dbError);
+      }
+
+      // Check for anomalies
+      await checkAirQuality(
         newData.particulate.pm25,
         newData.particulate.pm10,
         newData.mq7.co
