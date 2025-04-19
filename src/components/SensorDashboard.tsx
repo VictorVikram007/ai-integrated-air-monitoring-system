@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Gauge, ChartLine, Wind, AlertTriangle } from "lucide-react";
 import { generateSensorData } from "@/utils/generateSensorData";
@@ -8,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import SensorMap from './SensorMap';
+import { Badge } from "@/components/ui/badge";
 
 interface SensorData {
   particulate: {
@@ -21,6 +21,14 @@ interface SensorData {
     co: number;
   };
 }
+
+const getAirQualityInfo = (pm25: number): { label: string; color: string } => {
+  if (pm25 > 180) return { label: 'Severe', color: 'bg-red-500 hover:bg-red-600' };
+  if (pm25 > 90) return { label: 'Very Poor', color: 'bg-orange-500 hover:bg-orange-600' };
+  if (pm25 > 60) return { label: 'Poor', color: 'bg-yellow-500 hover:bg-yellow-600' };
+  if (pm25 > 30) return { label: 'Moderate', color: 'bg-blue-500 hover:bg-blue-600' };
+  return { label: 'Good', color: 'bg-green-500 hover:bg-green-600' };
+};
 
 const checkAirQuality = async (pm25: number, co: number) => {
   try {
@@ -87,7 +95,7 @@ const SensorDashboard = () => {
             co: newData.mq7.co,
             temperature: newData.dht11.temperature,
             humidity: newData.dht11.humidity,
-            pm10: 0, // Adding default pm10 value to satisfy table schema requirements
+            pm10: 0,
             created_at: new Date().toISOString()
           });
 
@@ -109,7 +117,7 @@ const SensorDashboard = () => {
     };
 
     const interval = setInterval(updateData, 2000);
-    updateData(); // Initial update
+    updateData();
 
     return () => clearInterval(interval);
   }, []);
@@ -134,7 +142,14 @@ const SensorDashboard = () => {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium">PM2.5</p>
-                <p className="text-2xl font-bold">{sensorData.particulate.pm25} µg/m³</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-bold">{sensorData.particulate.pm25} µg/m³</p>
+                  <Badge 
+                    className={getAirQualityInfo(sensorData.particulate.pm25).color}
+                  >
+                    {getAirQualityInfo(sensorData.particulate.pm25).label}
+                  </Badge>
+                </div>
               </div>
               <Wind className="h-8 w-8 text-blue-500" />
             </div>
