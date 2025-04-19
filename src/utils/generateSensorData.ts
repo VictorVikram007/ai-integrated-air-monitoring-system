@@ -5,8 +5,8 @@ let previousReadings = {
     pm10: 50,
   },
   dht11: {
-    temperature: 25,
-    humidity: 50,
+    temperature: 30, // Starting with a value within the new range
+    humidity: 70,    // Starting with a value within the new range
   },
   mq7: {
     co: 30,
@@ -28,8 +28,8 @@ export const generateSensorData = () => {
       pm10: getGradualChange(previousReadings.particulate.pm10, 0, 999, 5),
     },
     dht11: {
-      temperature: getGradualChange(previousReadings.dht11.temperature, 0, 50, 1),
-      humidity: getGradualChange(previousReadings.dht11.humidity, 20, 90, 2),
+      temperature: getGradualChange(previousReadings.dht11.temperature, 25, 40, 1), // New temperature range
+      humidity: getGradualChange(previousReadings.dht11.humidity, 60, 90, 2),      // New humidity range
     },
     mq7: {
       co: getGradualChange(previousReadings.mq7.co, 20, 2000, 10),
