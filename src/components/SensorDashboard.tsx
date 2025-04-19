@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Gauge, ChartLine, Wind } from "lucide-react";
 import { generateSensorData } from "@/utils/generateSensorData";
+import { toast } from "@/components/ui/sonner";
 import SensorCard from "./SensorCard";
 import { Progress } from "@/components/ui/progress";
 
@@ -19,6 +20,26 @@ interface SensorData {
   };
 }
 
+const checkAirQuality = (pm25: number, pm10: number, co: number) => {
+  // Check PM2.5 and PM10
+  if (pm25 > 180 || pm10 > 180) {
+    toast.warning("Air Quality Alert", {
+      description: "Severe air quality detected! PM levels exceeding 180 µg/m³",
+    });
+  } else if (pm25 > 91 || pm10 > 91) {
+    toast.warning("Air Quality Warning", {
+      description: "Very poor air quality detected! PM levels between 91-180 µg/m³",
+    });
+  }
+
+  // Check CO levels
+  if (co > 50) {
+    toast.warning("CO Level Alert", {
+      description: `High CO concentration detected: ${co} ppm`,
+    });
+  }
+};
+
 const SensorDashboard = () => {
   const [sensorData, setSensorData] = useState<SensorData>({
     particulate: { pm25: 0, pm10: 0 },
@@ -28,7 +49,15 @@ const SensorDashboard = () => {
 
   useEffect(() => {
     const updateData = () => {
-      setSensorData(generateSensorData());
+      const newData = generateSensorData();
+      setSensorData(newData);
+      
+      // Check thresholds and show alerts
+      checkAirQuality(
+        newData.particulate.pm25,
+        newData.particulate.pm10,
+        newData.mq7.co
+      );
     };
 
     // Update every 2 seconds
@@ -108,3 +137,4 @@ const SensorDashboard = () => {
 };
 
 export default SensorDashboard;
+
