@@ -24,7 +24,6 @@ interface SensorData {
 
 const checkAirQuality = async (pm25: number, pm10: number, co: number) => {
   try {
-    // Call Supabase Edge Function for anomaly detection
     const { data, error } = await supabase.functions.invoke('detect-anomaly', {
       body: {
         pm25,
@@ -44,7 +43,6 @@ const checkAirQuality = async (pm25: number, pm10: number, co: number) => {
       });
     }
 
-    // Updated air quality checks based on Chennai standards
     if (pm25 > 180 || pm10 > 180) {
       toast.error("Severe Air Quality Alert", {
         description: "Severe air pollution detected! PM levels exceeding 180 µg/m³",
@@ -59,7 +57,6 @@ const checkAirQuality = async (pm25: number, pm10: number, co: number) => {
       });
     }
 
-    // Check CO levels
     if (co > 50) {
       toast.warning("CO Level Alert", {
         description: `High CO concentration detected: ${co} ppm`,
@@ -84,7 +81,6 @@ const SensorDashboard = () => {
       setSensorData(newData);
       
       try {
-        // Store reading in Supabase
         const { error: dbError } = await supabase
           .from('sensor_readings')
           .insert([{
@@ -102,7 +98,6 @@ const SensorDashboard = () => {
         } else {
           setSupabaseError(false);
           
-          // Check for anomalies
           await checkAirQuality(
             newData.particulate.pm25,
             newData.particulate.pm10,
@@ -115,7 +110,6 @@ const SensorDashboard = () => {
       }
     };
 
-    // Update every 2 seconds
     const interval = setInterval(updateData, 2000);
     updateData(); // Initial update
 
@@ -124,7 +118,7 @@ const SensorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">ESP32 Sensor Monitoring</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">AirGuard</h1>
       
       {supabaseError && (
         <Alert variant="destructive" className="mb-6">
@@ -137,7 +131,6 @@ const SensorDashboard = () => {
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Nova PM Sensor */}
         <SensorCard title="Nova PM Sensor SDS011">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -160,7 +153,6 @@ const SensorDashboard = () => {
           </div>
         </SensorCard>
 
-        {/* DHT11 Sensor */}
         <SensorCard title="DHT11 Sensor">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -183,7 +175,6 @@ const SensorDashboard = () => {
           </div>
         </SensorCard>
 
-        {/* MQ-7 Sensor */}
         <SensorCard title="MQ-7 Sensor">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
