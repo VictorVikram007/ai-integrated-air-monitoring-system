@@ -5,11 +5,23 @@ import 'leaflet/dist/leaflet.css';
 import { Card } from './ui/card';
 import './SensorMap.css';
 
+// Define type for location data
+type Location = {
+  name: string;
+  coordinates: [number, number]; // Latitude, Longitude
+  readings: {
+    pm25: number;
+    pm10: number;
+    temperature: number;
+    humidity: number;
+  };
+};
+
 // Chennai locations with sensor data
-const locations = [
+const locations: Location[] = [
   {
     name: "Sathyabama University",
-    coordinates: [12.8760, 80.2186] as [number, number], // Note: Leaflet uses [lat, lng]
+    coordinates: [12.8760, 80.2186],
     readings: {
       pm25: 85,
       pm10: 95,
@@ -19,7 +31,7 @@ const locations = [
   },
   {
     name: "Marina Beach",
-    coordinates: [13.0500, 80.2826] as [number, number],
+    coordinates: [13.0500, 80.2826],
     readings: {
       pm25: 110,
       pm10: 130,
@@ -29,7 +41,7 @@ const locations = [
   },
   {
     name: "Thiruvanmiyur",
-    coordinates: [12.9830, 80.2590] as [number, number],
+    coordinates: [12.9830, 80.2590],
     readings: {
       pm25: 75,
       pm10: 88,
