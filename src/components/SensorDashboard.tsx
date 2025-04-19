@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Gauge, ChartLine, Wind, AlertTriangle } from "lucide-react";
 import { generateSensorData } from "@/utils/generateSensorData";
@@ -7,6 +6,7 @@ import SensorCard from "./SensorCard";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import SensorMap from './SensorMap';
 
 interface SensorData {
   particulate: {
@@ -197,6 +197,8 @@ const SensorDashboard = () => {
           </div>
         </SensorCard>
       </div>
+
+      <SensorMap />
     </div>
   );
 };
