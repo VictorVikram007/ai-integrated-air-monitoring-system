@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -13,7 +12,6 @@ import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 import { Card } from './ui/card';
 import 'ol/ol.css';
 
-// Define type for location data
 type Location = {
   name: string;
   coordinates: [number, number]; // Latitude, Longitude
@@ -25,7 +23,6 @@ type Location = {
   };
 };
 
-// Chennai locations with sensor data
 const locations: Location[] = [
   {
     name: "Sathyabama University",
@@ -69,7 +66,7 @@ const locations: Location[] = [
   },
   {
     name: "Navalur",
-    coordinates: [12.8741, 80.2283],
+    coordinates: [12.9279, 80.2407],
     readings: {
       pm25: 88,
       pm10: 98,
@@ -86,7 +83,6 @@ const SensorMap = () => {
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    // Create vector features for each location
     const features = locations.map(location => {
       const feature = new Feature({
         geometry: new Point(fromLonLat([location.coordinates[1], location.coordinates[0]])),
@@ -94,7 +90,6 @@ const SensorMap = () => {
         readings: location.readings,
       });
 
-      // Set style based on PM2.5 levels
       feature.setStyle(new Style({
         image: new CircleStyle({
           radius: 8,
@@ -111,7 +106,6 @@ const SensorMap = () => {
       return feature;
     });
 
-    // Create vector source and layer
     const vectorSource = new VectorSource({
       features: features,
     });
@@ -120,7 +114,6 @@ const SensorMap = () => {
       source: vectorSource,
     });
 
-    // Initialize map
     map.current = new Map({
       target: mapContainer.current,
       layers: [
@@ -130,12 +123,11 @@ const SensorMap = () => {
         vectorLayer,
       ],
       view: new View({
-        center: fromLonLat([80.2186, 12.8760]), // Chennai coordinates
+        center: fromLonLat([80.2186, 12.8760]),
         zoom: 11,
       }),
     });
 
-    // Add popup overlay for location info
     const container = document.createElement('div');
     container.className = 'ol-popup bg-white p-3 rounded shadow-lg';
 
@@ -167,20 +159,18 @@ const SensorMap = () => {
       }
     });
 
-    // Cleanup
     return () => {
       map.current?.setTarget(undefined);
       container.remove();
     };
   }, []);
 
-  // Helper function to determine marker color based on PM2.5 levels
   const getMarkerColor = (pm25: number): string => {
-    if (pm25 > 180) return '#FF0000'; // Severe - Red
-    if (pm25 > 91) return '#FFA500';  // Very Poor - Orange
-    if (pm25 > 61) return '#FFFF00';  // Poor - Yellow
-    if (pm25 > 31) return '#90EE90';  // Moderate - Light Green
-    return '#00FF00';                 // Good - Green
+    if (pm25 > 180) return '#FF0000';
+    if (pm25 > 91) return '#FFA500';
+    if (pm25 > 61) return '#FFFF00';
+    if (pm25 > 31) return '#90EE90';
+    return '#00FF00';
   };
 
   return (
