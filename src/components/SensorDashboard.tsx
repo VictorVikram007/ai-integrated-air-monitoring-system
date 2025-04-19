@@ -1,11 +1,12 @@
 
 import { useEffect, useState } from "react";
-import { Gauge, ChartLine, Wind } from "lucide-react";
+import { Gauge, ChartLine, Wind, AlertTriangle } from "lucide-react";
 import { generateSensorData } from "@/utils/generateSensorData";
 import { toast } from "@/components/ui/sonner";
 import SensorCard from "./SensorCard";
 import { Progress } from "@/components/ui/progress";
 import { createClient } from '@supabase/supabase-js';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SensorData {
   particulate: {
@@ -21,31 +22,38 @@ interface SensorData {
   };
 }
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || '',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-);
+// Get Supabase credentials
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Initialize Supabase client only if credentials are available
+const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 const checkAirQuality = async (pm25: number, pm10: number, co: number) => {
   try {
-    // Call Supabase Edge Function for anomaly detection
-    const { data, error } = await supabase.functions.invoke('detect-anomaly', {
-      body: {
-        pm25,
-        pm10,
-        co
-      }
-    });
-
-    if (error) {
-      console.error('Error checking anomaly:', error);
-      return;
-    }
-
-    if (data?.isAnomaly) {
-      toast.warning("Anomaly Detected!", {
-        description: data.message,
+    // Only call Supabase if client is initialized
+    if (supabase) {
+      // Call Supabase Edge Function for anomaly detection
+      const { data, error } = await supabase.functions.invoke('detect-anomaly', {
+        body: {
+          pm25,
+          pm10,
+          co
+        }
       });
+
+      if (error) {
+        console.error('Error checking anomaly:', error);
+        return;
+      }
+
+      if (data?.isAnomaly) {
+        toast.warning("Anomaly Detected!", {
+          description: data.message,
+        });
+      }
     }
 
     // Regular air quality checks
@@ -76,34 +84,37 @@ const SensorDashboard = () => {
     dht11: { temperature: 0, humidity: 0 },
     mq7: { co: 0 },
   });
+  const [supabaseError, setSupabaseError] = useState(!supabase);
 
   useEffect(() => {
     const updateData = async () => {
       const newData = generateSensorData();
       setSensorData(newData);
       
-      // Store reading in Supabase
-      const { error: dbError } = await supabase
-        .from('sensor_readings')
-        .insert([{
-          pm25: newData.particulate.pm25,
-          pm10: newData.particulate.pm10,
-          co: newData.mq7.co,
-          temperature: newData.dht11.temperature,
-          humidity: newData.dht11.humidity,
-          created_at: new Date().toISOString()
-        }]);
+      // Store reading in Supabase if client is initialized
+      if (supabase) {
+        const { error: dbError } = await supabase
+          .from('sensor_readings')
+          .insert([{
+            pm25: newData.particulate.pm25,
+            pm10: newData.particulate.pm10,
+            co: newData.mq7.co,
+            temperature: newData.dht11.temperature,
+            humidity: newData.dht11.humidity,
+            created_at: new Date().toISOString()
+          }]);
 
-      if (dbError) {
-        console.error('Error storing sensor data:', dbError);
+        if (dbError) {
+          console.error('Error storing sensor data:', dbError);
+        }
+
+        // Check for anomalies
+        await checkAirQuality(
+          newData.particulate.pm25,
+          newData.particulate.pm10,
+          newData.mq7.co
+        );
       }
-
-      // Check for anomalies
-      await checkAirQuality(
-        newData.particulate.pm25,
-        newData.particulate.pm10,
-        newData.mq7.co
-      );
     };
 
     // Update every 2 seconds
@@ -116,6 +127,16 @@ const SensorDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <h1 className="text-3xl font-bold mb-8 text-center">ESP32 Sensor Monitoring</h1>
+      
+      {supabaseError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Supabase connection not configured. Environment variables VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY 
+            are required. Data is being generated locally but not stored or analyzed for anomalies.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Nova PM Sensor */}
@@ -183,4 +204,3 @@ const SensorDashboard = () => {
 };
 
 export default SensorDashboard;
-
