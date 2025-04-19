@@ -17,7 +17,6 @@ type Location = {
   coordinates: [number, number]; // Latitude, Longitude
   readings: {
     pm25: number;
-    pm10: number;
     temperature: number;
     humidity: number;
   };
@@ -29,7 +28,6 @@ const locations: Location[] = [
     coordinates: [12.8760, 80.2186],
     readings: {
       pm25: 85,
-      pm10: 95,
       temperature: 32,
       humidity: 75
     }
@@ -39,7 +37,6 @@ const locations: Location[] = [
     coordinates: [13.0500, 80.2826],
     readings: {
       pm25: 110,
-      pm10: 130,
       temperature: 35,
       humidity: 82
     }
@@ -49,7 +46,6 @@ const locations: Location[] = [
     coordinates: [12.9830, 80.2590],
     readings: {
       pm25: 75,
-      pm10: 88,
       temperature: 33,
       humidity: 78
     }
@@ -59,7 +55,6 @@ const locations: Location[] = [
     coordinates: [12.9010, 80.2279],
     readings: {
       pm25: 92,
-      pm10: 105,
       temperature: 34,
       humidity: 77
     }
@@ -69,7 +64,6 @@ const locations: Location[] = [
     coordinates: [12.9279, 80.2407],
     readings: {
       pm25: 88,
-      pm10: 98,
       temperature: 33,
       humidity: 76
     }
@@ -141,7 +135,6 @@ const SensorMap = () => {
         container.innerHTML = `
           <h3 class="font-bold mb-2">${properties.name}</h3>
           <p class="mb-1">PM2.5: ${readings.pm25} µg/m³</p>
-          <p class="mb-1">PM10: ${readings.pm10} µg/m³</p>
           <p class="mb-1">Temperature: ${readings.temperature}°C</p>
           <p class="mb-1">Humidity: ${readings.humidity}%</p>
         `;

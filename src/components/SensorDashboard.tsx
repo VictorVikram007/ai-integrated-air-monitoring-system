@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Gauge, ChartLine, Wind, AlertTriangle } from "lucide-react";
 import { generateSensorData } from "@/utils/generateSensorData";
@@ -11,7 +12,6 @@ import SensorMap from './SensorMap';
 interface SensorData {
   particulate: {
     pm25: number;
-    pm10: number;
   };
   dht11: {
     temperature: number;
@@ -22,12 +22,11 @@ interface SensorData {
   };
 }
 
-const checkAirQuality = async (pm25: number, pm10: number, co: number) => {
+const checkAirQuality = async (pm25: number, co: number) => {
   try {
     const { data, error } = await supabase.functions.invoke('detect-anomaly', {
       body: {
         pm25,
-        pm10,
         co
       }
     });
@@ -43,17 +42,17 @@ const checkAirQuality = async (pm25: number, pm10: number, co: number) => {
       });
     }
 
-    if (pm25 > 180 || pm10 > 180) {
+    if (pm25 > 180) {
       toast.error("Severe Air Quality Alert", {
-        description: "Severe air pollution detected! PM levels exceeding 180 µg/m³",
+        description: "Severe air pollution detected! PM2.5 levels exceeding 180 µg/m³",
       });
-    } else if (pm25 > 91 || pm10 > 91) {
+    } else if (pm25 > 91) {
       toast.warning("Very Poor Air Quality Alert", {
-        description: "Very poor air quality detected! PM levels between 91-180 µg/m³",
+        description: "Very poor air quality detected! PM2.5 levels between 91-180 µg/m³",
       });
-    } else if (pm25 > 61 || pm10 > 61) {
+    } else if (pm25 > 61) {
       toast.warning("Poor Air Quality Warning", {
-        description: "Poor air quality detected! PM levels between 61-90 µg/m³",
+        description: "Poor air quality detected! PM2.5 levels between 61-90 µg/m³",
       });
     }
 
@@ -69,7 +68,7 @@ const checkAirQuality = async (pm25: number, pm10: number, co: number) => {
 
 const SensorDashboard = () => {
   const [sensorData, setSensorData] = useState<SensorData>({
-    particulate: { pm25: 0, pm10: 0 },
+    particulate: { pm25: 0 },
     dht11: { temperature: 0, humidity: 0 },
     mq7: { co: 0 },
   });
@@ -85,7 +84,6 @@ const SensorDashboard = () => {
           .from('sensor_readings')
           .insert([{
             pm25: newData.particulate.pm25,
-            pm10: newData.particulate.pm10,
             co: newData.mq7.co,
             temperature: newData.dht11.temperature,
             humidity: newData.dht11.humidity,
@@ -100,7 +98,6 @@ const SensorDashboard = () => {
           
           await checkAirQuality(
             newData.particulate.pm25,
-            newData.particulate.pm10,
             newData.mq7.co
           );
         }
@@ -141,15 +138,6 @@ const SensorDashboard = () => {
               <Wind className="h-8 w-8 text-blue-500" />
             </div>
             <Progress value={(sensorData.particulate.pm25 / 999.9) * 100} className="h-2" />
-            
-            <div className="flex items-center justify-between mt-4">
-              <div className="space-y-1">
-                <p className="text-sm font-medium">PM10</p>
-                <p className="text-2xl font-bold">{sensorData.particulate.pm10} µg/m³</p>
-              </div>
-              <Wind className="h-8 w-8 text-purple-500" />
-            </div>
-            <Progress value={(sensorData.particulate.pm10 / 999.9) * 100} className="h-2" />
           </div>
         </SensorCard>
 
