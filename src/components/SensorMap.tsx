@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -54,6 +55,26 @@ const locations: Location[] = [
       pm10: 88,
       temperature: 33,
       humidity: 78
+    }
+  },
+  {
+    name: "Sholinganallur",
+    coordinates: [12.9010, 80.2279],
+    readings: {
+      pm25: 92,
+      pm10: 105,
+      temperature: 34,
+      humidity: 77
+    }
+  },
+  {
+    name: "Navalur",
+    coordinates: [12.8741, 80.2283],
+    readings: {
+      pm25: 88,
+      pm10: 98,
+      temperature: 33,
+      humidity: 76
     }
   }
 ];
