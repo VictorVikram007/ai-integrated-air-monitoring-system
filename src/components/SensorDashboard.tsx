@@ -44,14 +44,18 @@ const checkAirQuality = async (pm25: number, pm10: number, co: number) => {
       });
     }
 
-    // Regular air quality checks
+    // Updated air quality checks based on Chennai standards
     if (pm25 > 180 || pm10 > 180) {
-      toast.warning("Air Quality Alert", {
-        description: "Severe air quality detected! PM levels exceeding 180 µg/m³",
+      toast.error("Severe Air Quality Alert", {
+        description: "Severe air pollution detected! PM levels exceeding 180 µg/m³",
       });
     } else if (pm25 > 91 || pm10 > 91) {
-      toast.warning("Air Quality Warning", {
+      toast.warning("Very Poor Air Quality Alert", {
         description: "Very poor air quality detected! PM levels between 91-180 µg/m³",
+      });
+    } else if (pm25 > 61 || pm10 > 61) {
+      toast.warning("Poor Air Quality Warning", {
+        description: "Poor air quality detected! PM levels between 61-90 µg/m³",
       });
     }
 
