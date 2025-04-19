@@ -18,22 +18,22 @@ const PM25Sensor = ({ pm25 }: PM25SensorProps) => {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium">PM2.5</p>
-            <div className="flex items-center gap-2">
-              <p className="text-2xl font-bold">{pm25} µg/m³</p>
-              <Badge className={airQualityInfo.color}>
-                {airQualityInfo.label}
-              </Badge>
-            </div>
+            <p className="text-2xl font-bold">{pm25} µg/m³</p>
           </div>
           <Wind className="h-8 w-8 text-blue-500" />
         </div>
-        <Progress 
-          value={
-            ((pm25 - airQualityInfo.range[0]) / 
-            (airQualityInfo.range[1] - airQualityInfo.range[0])) * 100
-          } 
-          className="h-2" 
-        />
+        <div className="space-y-2">
+          <Badge className={`w-full text-center ${airQualityInfo.color}`}>
+            {airQualityInfo.label} Air Quality
+          </Badge>
+          <Progress 
+            value={
+              ((pm25 - airQualityInfo.range[0]) / 
+              (airQualityInfo.range[1] - airQualityInfo.range[0])) * 100
+            } 
+            className="h-2" 
+          />
+        </div>
       </div>
     </SensorCard>
   );
