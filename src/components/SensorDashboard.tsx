@@ -82,13 +82,14 @@ const SensorDashboard = () => {
       try {
         const { error: dbError } = await supabase
           .from('sensor_readings')
-          .insert([{
+          .insert({
             pm25: newData.particulate.pm25,
             co: newData.mq7.co,
             temperature: newData.dht11.temperature,
             humidity: newData.dht11.humidity,
+            pm10: 0, // Adding default pm10 value to satisfy table schema requirements
             created_at: new Date().toISOString()
-          }]);
+          });
 
         if (dbError) {
           console.error('Error storing sensor data:', dbError);
