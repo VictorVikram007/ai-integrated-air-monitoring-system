@@ -22,12 +22,12 @@ interface SensorData {
   };
 }
 
-const getAirQualityInfo = (pm25: number): { label: string; color: string } => {
-  if (pm25 > 180) return { label: 'Severe', color: 'bg-red-500 hover:bg-red-600' };
-  if (pm25 > 90) return { label: 'Very Poor', color: 'bg-orange-500 hover:bg-orange-600' };
-  if (pm25 > 60) return { label: 'Poor', color: 'bg-yellow-500 hover:bg-yellow-600' };
-  if (pm25 > 30) return { label: 'Moderate', color: 'bg-blue-500 hover:bg-blue-600' };
-  return { label: 'Good', color: 'bg-green-500 hover:bg-green-600' };
+const getAirQualityInfo = (pm25: number): { label: string; color: string; range: [number, number] } => {
+  if (pm25 > 180) return { label: 'Severe', color: 'bg-red-500 hover:bg-red-600', range: [180, 250] };
+  if (pm25 > 90) return { label: 'Very Poor', color: 'bg-orange-500 hover:bg-orange-600', range: [91, 180] };
+  if (pm25 > 60) return { label: 'Poor', color: 'bg-yellow-500 hover:bg-yellow-600', range: [61, 90] };
+  if (pm25 > 30) return { label: 'Moderate', color: 'bg-blue-500 hover:bg-blue-600', range: [31, 60] };
+  return { label: 'Good', color: 'bg-green-500 hover:bg-green-600', range: [0, 30] };
 };
 
 const checkAirQuality = async (pm25: number, co: number) => {
@@ -153,7 +153,15 @@ const SensorDashboard = () => {
               </div>
               <Wind className="h-8 w-8 text-blue-500" />
             </div>
-            <Progress value={(sensorData.particulate.pm25 / 999.9) * 100} className="h-2" />
+            <Progress 
+              value={
+                ((sensorData.particulate.pm25 - 
+                  getAirQualityInfo(sensorData.particulate.pm25).range[0]) / 
+                  (getAirQualityInfo(sensorData.particulate.pm25).range[1] - 
+                  getAirQualityInfo(sensorData.particulate.pm25).range[0])) * 100
+              } 
+              className="h-2" 
+            />
           </div>
         </SensorCard>
 
