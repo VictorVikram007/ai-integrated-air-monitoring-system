@@ -33,7 +33,6 @@ const SensorDashboard = () => {
   useEffect(() => {
     console.log('Setting up realtime subscription...');
     
-    // Subscribe to realtime updates
     const channel = supabase
       .channel('sensor-readings')
       .on(
@@ -67,6 +66,12 @@ const SensorDashboard = () => {
         }
       )
       .subscribe();
+
+    // Error handling for subscription
+    if (channel === null) {
+      console.error('Failed to create Supabase channel');
+      setSupabaseError(true);
+    }
 
     return () => {
       console.log('Cleaning up subscription');
