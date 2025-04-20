@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { generateSensorData } from "@/utils/generateSensorData";
@@ -32,39 +31,52 @@ const SensorDashboard = () => {
   const [supabaseError, setSupabaseError] = useState(false);
 
   useEffect(() => {
-    const updateData = async () => {
-      const newData = generateSensorData();
-      setSensorData(newData);
-      
-      try {
-        const { error: dbError } = await supabase
-          .from('sensor_readings')
-          .insert({
-            pm25: newData.particulate.pm25,
-            co: newData.mq7.co,
-            temperature: newData.dht11.temperature,
-            humidity: newData.dht11.humidity,
-            pm10: 0,
-            created_at: new Date().toISOString()
-          });
-
-        if (dbError) {
-          console.error('Error storing sensor data:', dbError);
-          setSupabaseError(true);
-        } else {
-          setSupabaseError(false);
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('sensor-readings')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'sensor_readings'
+        },
+        async (payload) => {
+          const newData = {
+            particulate: { pm25: payload.new.pm25 },
+            dht11: { 
+              temperature: payload.new.temperature,
+              humidity: payload.new.humidity 
+            },
+            mq7: { co: payload.new.co }
+          };
+          
+          setSensorData(newData);
           await checkAirQuality(newData.particulate.pm25, newData.mq7.co);
         }
-      } catch (error) {
-        console.error('Error connecting to Supabase:', error);
-        setSupabaseError(true);
-      }
+      )
+      .subscribe();
+
+    // Only use generateSensorData if no real-time data is received for 5 seconds
+    let fallbackInterval: NodeJS.Timeout;
+    let lastUpdate = Date.now();
+
+    const startFallback = () => {
+      fallbackInterval = setInterval(() => {
+        const timeSinceLastUpdate = Date.now() - lastUpdate;
+        if (timeSinceLastUpdate > 5000) {
+          const newData = generateSensorData();
+          setSensorData(newData);
+        }
+      }, 2000);
     };
 
-    const interval = setInterval(updateData, 2000);
-    updateData();
+    startFallback();
 
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(channel);
+      if (fallbackInterval) clearInterval(fallbackInterval);
+    };
   }, []);
 
   return (
