@@ -15,7 +15,6 @@ export type Database = {
           created_at: string | null
           humidity: number
           id: string
-          pm10: number
           pm25: number
           temperature: number
         }
@@ -24,7 +23,6 @@ export type Database = {
           created_at?: string | null
           humidity: number
           id?: string
-          pm10: number
           pm25: number
           temperature: number
         }
@@ -33,7 +31,6 @@ export type Database = {
           created_at?: string | null
           humidity?: number
           id?: string
-          pm10?: number
           pm25?: number
           temperature?: number
         }

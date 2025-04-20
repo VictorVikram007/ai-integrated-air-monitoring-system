@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { generateSensorData } from "@/utils/generateSensorData";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import SensorMap from './SensorMap';
@@ -30,7 +29,6 @@ const SensorDashboard = () => {
     mq7: { co: 0 },
   });
   const [supabaseError, setSupabaseError] = useState(false);
-  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
 
   useEffect(() => {
     console.log('Setting up realtime subscription...');
@@ -65,34 +63,16 @@ const SensorDashboard = () => {
           
           console.log('Formatted sensor data:', newData);
           setSensorData(newData);
-          setLastUpdateTime(Date.now());
           await checkAirQuality(newData.particulate.pm25, newData.mq7.co);
         }
       )
       .subscribe();
 
-    // Only use generateSensorData if no real-time data is received for 5 seconds
-    let fallbackInterval: NodeJS.Timeout;
-
-    const startFallback = () => {
-      fallbackInterval = setInterval(() => {
-        const timeSinceLastUpdate = Date.now() - lastUpdateTime;
-        if (timeSinceLastUpdate > 5000) {
-          console.log('No real data for 5 seconds, using generated data');
-          const newData = generateSensorData();
-          setSensorData(newData);
-        }
-      }, 2000);
-    };
-
-    startFallback();
-
     return () => {
       console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
-      if (fallbackInterval) clearInterval(fallbackInterval);
     };
-  }, [lastUpdateTime]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -102,8 +82,7 @@ const SensorDashboard = () => {
         <Alert variant="destructive" className="mb-6">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Error connecting to Supabase database. Sensor data is being generated locally but not stored.
-            Please check your connection or table permissions.
+            Error connecting to Supabase database. Please check your connection or table permissions.
           </AlertDescription>
         </Alert>
       )}
