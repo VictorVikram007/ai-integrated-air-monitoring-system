@@ -29,43 +29,52 @@ const SensorDashboard = () => {
     mq7: { co: 0 },
   });
   const [supabaseError, setSupabaseError] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<string>("No updates yet");
 
   useEffect(() => {
     // Initial fetch of the most recent reading
     const fetchLatestReading = async () => {
-      const { data, error } = await supabase
-        .from('sensor_readings')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('sensor_readings')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
 
-      if (error) {
-        console.error('Error fetching latest reading:', error);
+        if (error) {
+          console.error('Error fetching latest reading:', error);
+          setSupabaseError(true);
+          return;
+        }
+
+        if (data) {
+          console.log('Initial data loaded:', data);
+          const newData = {
+            particulate: { pm25: Number(data.pm25) },
+            dht11: { 
+              temperature: Number(data.temperature),
+              humidity: Number(data.humidity)
+            },
+            mq7: { co: Number(data.co) }
+          };
+          
+          setSensorData(newData);
+          setLastUpdate(new Date().toLocaleTimeString());
+          await checkAirQuality(newData.particulate.pm25, newData.mq7.co);
+        }
+      } catch (err) {
+        console.error('Unexpected error during fetch:', err);
         setSupabaseError(true);
-        return;
-      }
-
-      if (data) {
-        const newData = {
-          particulate: { pm25: Number(data.pm25) },
-          dht11: { 
-            temperature: Number(data.temperature),
-            humidity: Number(data.humidity)
-          },
-          mq7: { co: Number(data.co) }
-        };
-        
-        setSensorData(newData);
-        await checkAirQuality(newData.particulate.pm25, newData.mq7.co);
       }
     };
 
     fetchLatestReading();
     console.log('Setting up realtime subscription...');
     
+    // Set up the Supabase realtime subscription
     const channel = supabase
-      .channel('sensor-readings')
+      .channel('sensor-readings-channel')
       .on(
         'postgres_changes',
         {
@@ -74,7 +83,7 @@ const SensorDashboard = () => {
           table: 'sensor_readings'
         },
         async (payload) => {
-          console.log('Received new sensor reading:', payload.new);
+          console.log('Received new sensor reading in realtime:', payload.new);
           
           // Ensure values are properly formatted as numbers
           const pm25Value = Number(payload.new.pm25);
@@ -91,12 +100,21 @@ const SensorDashboard = () => {
             mq7: { co: coValue }
           };
           
-          console.log('Formatted sensor data:', newData);
+          console.log('Formatted sensor data for UI update:', newData);
           setSensorData(newData);
+          setLastUpdate(new Date().toLocaleTimeString());
           await checkAirQuality(newData.particulate.pm25, newData.mq7.co);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to realtime updates');
+        } else if (status === 'TIMED_OUT' || status === 'CHANNEL_ERROR') {
+          console.error('Failed to subscribe to realtime updates:', status);
+          setSupabaseError(true);
+        }
+      });
 
     // Error handling for subscription
     if (channel === null) {
@@ -112,7 +130,8 @@ const SensorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">AirGuard</h1>
+      <h1 className="text-3xl font-bold mb-2 text-center">AirGuard</h1>
+      <p className="text-center text-gray-600 mb-6">Last update: {lastUpdate}</p>
       
       {supabaseError && (
         <Alert variant="destructive" className="mb-6">
