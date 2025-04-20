@@ -31,6 +31,37 @@ const SensorDashboard = () => {
   const [supabaseError, setSupabaseError] = useState(false);
 
   useEffect(() => {
+    // Initial fetch of the most recent reading
+    const fetchLatestReading = async () => {
+      const { data, error } = await supabase
+        .from('sensor_readings')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error('Error fetching latest reading:', error);
+        setSupabaseError(true);
+        return;
+      }
+
+      if (data) {
+        const newData = {
+          particulate: { pm25: Number(data.pm25) },
+          dht11: { 
+            temperature: Number(data.temperature),
+            humidity: Number(data.humidity)
+          },
+          mq7: { co: Number(data.co) }
+        };
+        
+        setSensorData(newData);
+        await checkAirQuality(newData.particulate.pm25, newData.mq7.co);
+      }
+    };
+
+    fetchLatestReading();
     console.log('Setting up realtime subscription...');
     
     const channel = supabase
