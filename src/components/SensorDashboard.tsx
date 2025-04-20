@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { generateSensorData } from "@/utils/generateSensorData";
@@ -29,8 +30,11 @@ const SensorDashboard = () => {
     mq7: { co: 0 },
   });
   const [supabaseError, setSupabaseError] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
 
   useEffect(() => {
+    console.log('Setting up realtime subscription...');
+    
     // Subscribe to realtime updates
     const channel = supabase
       .channel('sensor-readings')
@@ -42,16 +46,26 @@ const SensorDashboard = () => {
           table: 'sensor_readings'
         },
         async (payload) => {
+          console.log('Received new sensor reading:', payload.new);
+          
+          // Ensure values are properly formatted as numbers
+          const pm25Value = Number(payload.new.pm25);
+          const tempValue = Number(payload.new.temperature);
+          const humidityValue = Number(payload.new.humidity);
+          const coValue = Number(payload.new.co);
+          
           const newData = {
-            particulate: { pm25: payload.new.pm25 },
+            particulate: { pm25: pm25Value },
             dht11: { 
-              temperature: payload.new.temperature,
-              humidity: payload.new.humidity 
+              temperature: tempValue,
+              humidity: humidityValue
             },
-            mq7: { co: payload.new.co }
+            mq7: { co: coValue }
           };
           
+          console.log('Formatted sensor data:', newData);
           setSensorData(newData);
+          setLastUpdateTime(Date.now());
           await checkAirQuality(newData.particulate.pm25, newData.mq7.co);
         }
       )
@@ -59,12 +73,12 @@ const SensorDashboard = () => {
 
     // Only use generateSensorData if no real-time data is received for 5 seconds
     let fallbackInterval: NodeJS.Timeout;
-    let lastUpdate = Date.now();
 
     const startFallback = () => {
       fallbackInterval = setInterval(() => {
-        const timeSinceLastUpdate = Date.now() - lastUpdate;
+        const timeSinceLastUpdate = Date.now() - lastUpdateTime;
         if (timeSinceLastUpdate > 5000) {
+          console.log('No real data for 5 seconds, using generated data');
           const newData = generateSensorData();
           setSensorData(newData);
         }
@@ -74,10 +88,11 @@ const SensorDashboard = () => {
     startFallback();
 
     return () => {
+      console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
       if (fallbackInterval) clearInterval(fallbackInterval);
     };
-  }, []);
+  }, [lastUpdateTime]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
