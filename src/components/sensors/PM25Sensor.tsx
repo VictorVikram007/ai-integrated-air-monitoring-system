@@ -13,7 +13,7 @@ const PM25Sensor = ({ pm25 }: PM25SensorProps) => {
   const airQualityInfo = getAirQualityInfo(pm25);
   
   return (
-    <SensorCard title="Nova PM Sensor SDS011">
+    <SensorCard title="Sharp GP 2Y1010 F 8X Sensor">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
