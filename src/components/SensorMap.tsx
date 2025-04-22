@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -60,8 +61,8 @@ const locations: Location[] = [
     }
   },
   {
-    name: "Navalur",
-    coordinates: [12.9279, 80.2407],
+    name: "Thuraipakkam", // Updated from Navalur
+    coordinates: [12.9279, 80.2407], // Kept the same coordinates as Navalur
     readings: {
       pm25: 88,
       temperature: 33,
