@@ -77,6 +77,42 @@ const locations: Location[] = [
       temperature: 31,
       humidity: 80
     }
+  },
+  {
+    name: "Marina Beach",
+    coordinates: [13.0500, 80.2826],
+    readings: {
+      pm25: 110,
+      temperature: 35,
+      humidity: 82
+    }
+  },
+  {
+    name: "Thiruvanmiyur",
+    coordinates: [12.9830, 80.2590],
+    readings: {
+      pm25: 75,
+      temperature: 33,
+      humidity: 78
+    }
+  },
+  {
+    name: "Sholinganallur",
+    coordinates: [12.9010, 80.2279],
+    readings: {
+      pm25: 92,
+      temperature: 34,
+      humidity: 77
+    }
+  },
+  {
+    name: "Thuraipakkam",
+    coordinates: [12.9279, 80.2407],
+    readings: {
+      pm25: 88,
+      temperature: 33,
+      humidity: 76
+    }
   }
 ];
 
