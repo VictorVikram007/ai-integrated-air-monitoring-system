@@ -34,39 +34,48 @@ const locations: Location[] = [
     }
   },
   {
-    name: "Marina Beach",
-    coordinates: [13.0500, 80.2826],
+    name: "Tambaram",
+    coordinates: [12.9249, 80.1000],
     readings: {
-      pm25: 110,
-      temperature: 35,
-      humidity: 82
-    }
-  },
-  {
-    name: "Thiruvanmiyur",
-    coordinates: [12.9830, 80.2590],
-    readings: {
-      pm25: 75,
+      pm25: 95,
       temperature: 33,
-      humidity: 78
+      humidity: 79
     }
   },
   {
-    name: "Sholinganallur",
-    coordinates: [12.9010, 80.2279],
+    name: "Avadi",
+    coordinates: [13.1155, 80.0969],
     readings: {
-      pm25: 92,
+      pm25: 82,
+      temperature: 34,
+      humidity: 76
+    }
+  },
+  {
+    name: "Guindy",
+    coordinates: [13.0067, 80.2206],
+    readings: {
+      pm25: 105,
+      temperature: 35,
+      humidity: 73
+    }
+  },
+  {
+    name: "Egmore",
+    coordinates: [13.0732, 80.2609],
+    readings: {
+      pm25: 98,
       temperature: 34,
       humidity: 77
     }
   },
   {
-    name: "Thuraipakkam", // Updated from Navalur
-    coordinates: [12.9279, 80.2407], // Kept the same coordinates as Navalur
+    name: "Chengalpattu",
+    coordinates: [12.6977, 79.9773],
     readings: {
-      pm25: 88,
-      temperature: 33,
-      humidity: 76
+      pm25: 78,
+      temperature: 31,
+      humidity: 80
     }
   }
 ];
