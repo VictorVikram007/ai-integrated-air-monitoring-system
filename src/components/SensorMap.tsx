@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
@@ -10,7 +10,8 @@ import { Point } from 'ol/geom';
 import { Vector as VectorLayer } from 'ol/layer';
 import { Vector as VectorSource } from 'ol/source';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
-import { Card } from './ui/card';
+import { Card, CardHeader, CardTitle } from './ui/card';
+import { MapPin } from 'lucide-react';
 import 'ol/ol.css';
 
 type Location = {
@@ -119,10 +120,12 @@ const locations: Location[] = [
 const SensorMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<Map | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
 
   useEffect(() => {
     if (!mapContainer.current) return;
 
+    // Create features for each location
     const features = locations.map(location => {
       const feature = new Feature({
         geometry: new Point(fromLonLat([location.coordinates[1], location.coordinates[0]])),
@@ -130,6 +133,7 @@ const SensorMap = () => {
         readings: location.readings,
       });
 
+      // Set a distinctive style for each marker
       feature.setStyle(new Style({
         image: new CircleStyle({
           radius: 8,
@@ -146,6 +150,7 @@ const SensorMap = () => {
       return feature;
     });
 
+    // Create vector source and layer
     const vectorSource = new VectorSource({
       features: features,
     });
@@ -154,6 +159,7 @@ const SensorMap = () => {
       source: vectorSource,
     });
 
+    // Create and configure map
     map.current = new Map({
       target: mapContainer.current,
       layers: [
@@ -163,11 +169,13 @@ const SensorMap = () => {
         vectorLayer,
       ],
       view: new View({
-        center: fromLonLat([80.2186, 12.8760]),
-        zoom: 11,
+        // Center on Chennai area
+        center: fromLonLat([80.2000, 13.0000]),
+        zoom: 10.5,
       }),
     });
 
+    // Handle click events for showing location info
     const container = document.createElement('div');
     container.className = 'ol-popup bg-white p-3 rounded shadow-lg';
 
@@ -193,13 +201,22 @@ const SensorMap = () => {
           container.style.left = `${pixel[0]}px`;
           container.style.top = `${pixel[1] - container.offsetHeight}px`;
         }
+        
+        // Update selected location
+        const locationName = properties.name;
+        const location = locations.find(loc => loc.name === locationName) || null;
+        setSelectedLocation(location);
       } else {
         container.remove();
+        setSelectedLocation(null);
       }
     });
 
+    // Clean up on unmount
     return () => {
-      map.current?.setTarget(undefined);
+      if (map.current) {
+        map.current.setTarget(undefined);
+      }
       container.remove();
     };
   }, []);
@@ -213,8 +230,22 @@ const SensorMap = () => {
   };
 
   return (
-    <Card className="w-full h-[400px] mt-6 relative">
-      <div ref={mapContainer} className="w-full h-full rounded-lg" />
+    <Card className="w-full h-[500px] mt-6 relative">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center">
+          <MapPin className="w-5 h-5 mr-2" />
+          Sensor Map
+        </CardTitle>
+      </CardHeader>
+      <div ref={mapContainer} className="w-full h-[90%] rounded-lg" />
+      {selectedLocation && (
+        <div className="absolute bottom-4 right-4 bg-white p-4 rounded-md shadow-md">
+          <h4 className="font-bold">{selectedLocation.name}</h4>
+          <p>PM2.5: {selectedLocation.readings.pm25} µg/m³</p>
+          <p>Temp: {selectedLocation.readings.temperature}°C</p>
+          <p>Humidity: {selectedLocation.readings.humidity}%</p>
+        </div>
+      )}
     </Card>
   );
 };
