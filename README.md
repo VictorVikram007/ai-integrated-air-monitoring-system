@@ -109,11 +109,7 @@ The system is designed to support Python-based machine learning models that can:
 
 * [Victor Vikram](https://github.com/VictorVikram007) – Developer, Designer, AI Research
 
----
 
-##  License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
